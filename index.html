@@ -1,0 +1,1454 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <script src="index.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #1e1e1e;
+      color: #ccc;
+      padding: 10px;
+      font-size: 12px;
+      user-select: text;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .panel { display: flex; flex-direction: column; gap: 7px; min-height: min-content; }
+    .panel > * { flex-shrink: 0; }
+    .section { display: flex; flex-direction: column; gap: 3px; }
+    .section.tight { gap: 2px; }
+    .section label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, textarea, select, sp-textarea {
+      background: #2d2d2d;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 5px 7px;
+      color: #eee;
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+      user-select: text;
+    }
+    input:focus, textarea:focus, select:focus, sp-textarea:focus { border-color: #2680eb; }
+    textarea, sp-textarea {
+      resize: vertical;
+      min-height: 40px;
+      line-height: 1.45;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    sp-textarea {
+      display: block;
+      height: 120px;
+      padding: 0;
+    }
+    #localComfyPrompt {
+      display: block;
+      min-height: 110px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    #rhWorkflowPrompt {
+      display: block;
+      min-height: 110px;
+      max-height: 220px;
+      overflow-y: auto;
+      resize: vertical;
+    }
+    .row { display: flex; flex-direction: row; gap: 4px; }
+    .row > * { flex: 1; }
+    .param-row { gap: 6px; align-items: flex-start; margin-top: 10px; }
+    .param-row > div { display: flex; flex-direction: column; gap: 2px; }
+    button {
+      background: #095aba;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #1068cc; }
+    button:disabled { background: #444; color: #777; cursor: default; }
+    button.secondary { background: #444; }
+    button.secondary:hover { background: #555; }
+    button.active { background: #2680eb; }
+    #rhWorkflowLoadJsonBtn {
+      background: #5c44b0;
+    }
+    #rhWorkflowLoadJsonBtn:hover {
+      background: #7955aa;
+    }
+    #localComfyLoadJsonBtn {
+      background: #5c44b0;
+    }
+    #localComfyLoadJsonBtn:hover {
+      background: #7955aa;
+    }
+
+    .service-tabs {
+      display: flex;
+      border-bottom: 1px solid #333;
+      gap: 0;
+      margin-bottom: 2px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      scrollbar-width: thin;
+    }
+    .service-tabs button {
+      background: none;
+      color: #888;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .service-tabs button:hover { color: #ccc; background: none; }
+    .service-tabs button.active {
+      color: #fff;
+      border-bottom-color: #2680eb;
+      font-weight: 600;
+      background: none;
+    }
+    .update-badge {
+      display: none;
+      align-items: center;
+      justify-content: flex-end;
+      color: #25c6da;
+      font-size: 10px;
+      font-weight: 400;
+      cursor: pointer;
+      user-select: none;
+      line-height: 1.1;
+      white-space: nowrap;
+      margin-top: 4px;
+      padding: 0 8px 4px 0;
+      min-height: 12px;
+      text-align: right;
+    }
+    .update-badge:hover { text-decoration: underline; }
+
+    .tabs { display: flex; gap: 4px; }
+    .tabs button {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 10px;
+      font-weight: 500;
+      border-radius: 3px;
+    }
+    .tabs button.active {
+      background: #7955aa;
+    }
+    .tabs button.secondary {
+      background: #444;
+    }
+    .source-preview {
+      width: 100%;
+      min-height: 60px;
+      background: #2d2d2d;
+      border: 1px dashed #555;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .source-preview img { max-width: 100%; max-height: 80px; display: none; }
+    .source-preview .placeholder { color: #666; font-size: 10px; text-align: center; padding: 12px; }
+    .thumb-list { display: flex; gap: 4px; flex-wrap: wrap; padding: 4px; width: 100%; }
+    .thumb-item {
+      position: relative; width: 50px; height: 50px; border-radius: 4px;
+      overflow: hidden; border: 1px solid #555; flex-shrink: 0;
+    }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb-item .thumb-idx {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      font-size: 8px;
+      padding: 0 3px;
+      border-radius: 0;
+      line-height: 13px;
+      width: 13px;
+      height: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb-item .thumb-del {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      border: none;
+      border-radius: 0;
+      width: 13px;
+      height: 13px;
+      font-size: 9px;
+      font-weight: bold;
+      line-height: 13px;
+      text-align: center;
+      padding: 0;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb-item .thumb-del:hover {
+      background: rgba(220,38,38,0.7);
+    }
+    .thumb-item .thumb-move {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    .thumb-item .thumb-up,
+    .thumb-item .thumb-down {
+      width: 14px;
+      height: 14px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .thumb-item .thumb-up:hover,
+    .thumb-item .thumb-down:hover {
+      background: rgba(38,132,220,0.7);
+    }
+    .thumb-add {
+      width: 50px; height: 50px; border-radius: 4px;
+      border: 1px dashed #666; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; flex-shrink: 0;
+      background: rgba(255,255,255,0.04); transition: background 0.15s;
+      font-size: 22px; color: #777; user-select: none;
+    }
+    .thumb-add:hover { background: rgba(255,255,255,0.12); border-color: #888; color: #aaa; }
+    .preview {
+      width: 100%;
+      min-height: 80px;
+      background: #2d2d2d;
+      border: 1px dashed #555;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .preview img { max-width: 100%; max-height: 180px; display: none; }
+    .preview-gallery {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    .preview-gallery-main {
+      width: 100%;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.18);
+      position: relative;
+    }
+    .preview-gallery-main img {
+      max-width: 100%;
+      max-height: 240px;
+      display: block;
+      object-fit: contain;
+    }
+    #llaiPreviewMain,
+    #rhWorkflowPreviewMain,
+    #localComfyPreviewMain {
+      height: 120px;
+      min-height: 0;
+      flex: 0 0 120px;
+    }
+    #llaiPreviewMain img,
+    #rhWorkflowPreviewMain img,
+    #localComfyPreviewMain img {
+      width: 100%;
+      height: 120px;
+      max-height: none;
+      object-fit: contain;
+    }
+    .preview-gallery-strip {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .preview-gallery-thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #555;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      opacity: 0.78;
+    }
+    .preview-gallery-thumb.active { opacity: 1; border-color: #9b7cff; }
+    .preview-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .preview-gallery-count {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      background: rgba(0,0,0,0.72);
+      color: #fff;
+      font-size: 10px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 4px;
+      z-index: 4;
+      pointer-events: none;
+    }
+    .preview-time {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 50;
+      display: none;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.72);
+      color: #81c784;
+      font-size: 10px;
+      line-height: 1.2;
+      font-family: 'Courier New', monospace;
+      pointer-events: none;
+      user-select: none;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+    }
+    .preview img { position: relative; z-index: 1; }
+    .preview.loading::after {
+      content: 'Generating...';
+      color: #999;
+      font-size: 11px;
+    }
+    .preview .placeholder { color: #666; font-size: 11px; text-align: center; padding: 16px; }
+    .status {
+      background: #2d2d2d;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 10px;
+      font-family: 'Courier New', monospace;
+      min-height: 20px;
+      word-break: break-all;
+    }
+    .status.success { color: #81c784; }
+    .status.error { color: #e57373; }
+    .actions { display: flex; gap: 4px; }
+    .actions > * { flex: 1; }
+    .actions button:first-child {
+      background: #5c44b0;
+    }
+    .actions button:first-child:hover {
+      background: #7955aa;
+    }
+    .i2i-options { display: none; }
+    .i2i-options.visible { display: flex; flex-direction: column; gap: 6px; }
+    .slider-container { display: flex; align-items: center; gap: 8px; }
+    .slider-container label { min-width: 50px; font-size: 10px; }
+    .slider-container input[type="range"] { flex: 1; }
+    .slider-container span { min-width: 28px; text-align: right; font-size: 10px; }
+    .service-content { display: none; flex-direction: column; gap: 7px; }
+    .service-content.visible { display: flex; }
+    .service-content > * { flex-shrink: 0; }
+    .check-option { display: flex; align-items: center; gap: 2px; }
+    .check-option input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      flex-shrink: 0;
+      transform: scale(0.9);
+      transform-origin: center;
+    }
+    .check-option label { font-size: 10px; color: #aaa; text-transform: none; letter-spacing: 0; cursor: pointer; }
+
+    .author-footer {
+      border-top: 1px solid #333;
+      padding: 1px 0 0;
+      margin-top: 1px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex-shrink: 0;
+      transform: scale(0.82);
+      transform-origin: top center;
+      width: 122%;
+      margin-left: -11%;
+    }
+    .author-footer .author-line {
+      font-size: 8px;
+      line-height: 1;
+      color: #ffffff;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      min-height: 0;
+      transform: translateY(24.39px);
+    }
+    .author-footer .contact-line {
+      font-size: 10px;
+    }
+    .author-footer .link-item {
+      color: #2f82ff;
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: inherit;
+      line-height: 1;
+      min-height: 0;
+      height: auto;
+      display: inline-block;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .author-footer .link-item:hover {
+      text-decoration: underline;
+    }
+    .author-footer .author-line .sep { margin: 0 4px; color: #444; }
+
+    .params-wrapper {
+      border: 1px solid #444;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .params-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: #2a2a2a;
+      cursor: pointer;
+      font-size: 12px;
+      color: #ccc;
+      user-select: none;
+    }
+    .params-toggle:hover { background: #333; }
+    .params-toggle .arrow { transition: transform 0.2s; font-size: 10px; color: #888; }
+    .params-toggle .arrow.collapsed { transform: rotate(-90deg); }
+    .params-body {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px 10px;
+      border-top: 1px solid #444;
+    }
+    .params-body.collapsed { display: none; }
+    #rhWorkflowParamsWrapper {
+      contain: layout paint;
+    }
+    #rhWorkflowParams {
+      display: block;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px 10px;
+      border-top: 1px solid #444;
+      contain: layout paint;
+      content-visibility: auto;
+      contain-intrinsic-size: 0 240px;
+      will-change: max-height, opacity;
+    }
+    #rhWorkflowParams.collapsed {
+      display: block !important;
+      max-height: 0 !important;
+      overflow: hidden;
+      opacity: 0;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border-top-width: 0;
+      content-visibility: hidden;
+      contain-intrinsic-size: 0 0;
+      pointer-events: none;
+    }
+    #rhWorkflowParams:not(.collapsed) {
+      opacity: 1;
+      content-visibility: auto;
+      pointer-events: auto;
+    }
+
+    .inline-modal {
+      display: none;
+      flex-direction: column;
+      border: 1px solid #2680eb;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #252525;
+    }
+    .inline-modal.visible { display: flex; }
+    .inline-modal.collapsed {
+      max-height: 39px;
+    }
+    .inline-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 10px;
+      background: #2a2a2a;
+      border-bottom: 1px solid #333;
+    }
+    .inline-modal-header span { font-size: 12px; font-weight: 600; color: #2680eb; }
+    .inline-modal-header button { padding: 3px 5px; font-size: 11px; min-width: 0; }
+    .inline-modal-body {
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 8px 10px;
+    }
+    .inline-modal.collapsed .inline-modal-body,
+    .inline-modal.collapsed .inline-modal-actions {
+      display: none;
+    }
+    .inline-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      padding: 4px 10px;
+      border-top: 1px solid #333;
+    }
+    .inline-modal-actions button { min-width: 70px; font-size: 11px; padding: 5px 12px; }
+
+    #llaiLongWaitModal {
+      margin-top: 6px;
+      border-color: #ff9800;
+    }
+    #llaiLongWaitModal .inline-modal-header span { color: #ffb74d; }
+    #llaiLongWaitModal .inline-modal-body { color: #e6e6e6; line-height: 1.45; }
+    #llaiLongWaitModal .inline-modal-actions button { font-size: 8px; padding: 2px 9px; }
+    #llaiLongWaitModal .danger-action { background: #8b2f2f; border-color: #b94a48; }
+
+    .image-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.78);
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .image-lightbox.visible { display: flex; }
+    .image-lightbox-panel {
+      position: relative;
+      max-width: 96vw;
+      max-height: 96vh;
+      background: #1f1f1f;
+      border: 1px solid #3a3a3a;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      overflow: hidden;
+    }
+    .image-lightbox-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      padding: 0;
+      line-height: 28px;
+      font-size: 16px;
+      background: rgba(0,0,0,0.55);
+    }
+    .image-lightbox-close:hover { background: rgba(0,0,0,0.75); }
+    .image-lightbox img {
+      display: block;
+      max-width: 96vw;
+      max-height: 96vh;
+      object-fit: contain;
+    }
+
+    :root {
+      --llai-bg: #0a2233;
+      --llai-panel: #102739;
+      --llai-surface: #18354d;
+      --llai-surface-2: #14293a;
+      --llai-border: #34506a;
+      --llai-border-strong: #21455f;
+      --llai-border-soft: #3c5d76;
+      --llai-text: #eef6fb;
+      --llai-muted: #c9d8e8;
+      --llai-muted-soft: #8fa4b8;
+      --llai-placeholder: #7f95a8;
+      --llai-accent: #25c6da;
+      --llai-accent-strong: #2ddcf0;
+      --llai-accent-soft: #62d0d8;
+      --llai-danger: #ff8a65;
+      --llai-secondary: #1b3447;
+      --llai-secondary-hover: #24465d;
+      --llai-header: #173247;
+      --llai-header-hover: #1f3f57;
+      --llai-overlay: rgba(2, 14, 22, 0.78);
+    }
+    body {
+      background: var(--llai-bg) !important;
+      color: var(--llai-muted) !important;
+    }
+    input, textarea, select, sp-textarea {
+      background: var(--llai-surface) !important;
+      border-color: var(--llai-border) !important;
+      color: var(--llai-text) !important;
+    }
+    .section label {
+      color: var(--llai-muted-soft) !important;
+    }
+    input:focus, textarea:focus, select:focus, sp-textarea:focus {
+      border-color: var(--llai-accent) !important;
+    }
+    button {
+      background: linear-gradient(90deg, #159bb0 0%, #25c6da 100%) !important;
+      color: var(--llai-text) !important;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #17afc5 0%, #2ad6e8 100%) !important;
+    }
+    button:disabled {
+      background: var(--llai-secondary) !important;
+      color: var(--llai-muted-soft) !important;
+    }
+    button.secondary {
+      background: var(--llai-secondary) !important;
+    }
+    button.secondary:hover {
+      background: var(--llai-secondary-hover) !important;
+    }
+    button.active {
+      background: linear-gradient(90deg, #159bb0 0%, #25c6da 100%) !important;
+    }
+    #rhWorkflowLoadJsonBtn, #localComfyLoadJsonBtn, .actions button:first-child {
+      background: linear-gradient(90deg, #159bb0 0%, #25c6da 100%) !important;
+    }
+    #rhWorkflowLoadJsonBtn:hover, #localComfyLoadJsonBtn:hover, .actions button:first-child:hover {
+      background: linear-gradient(90deg, #17afc5 0%, #2ad6e8 100%) !important;
+    }
+    .service-tabs {
+      border-bottom-color: var(--llai-border-strong) !important;
+    }
+    .service-tabs button {
+      color: var(--llai-muted-soft) !important;
+    }
+    .service-tabs button:hover {
+      color: var(--llai-text) !important;
+    }
+    .service-tabs button.active {
+      color: var(--llai-text) !important;
+      border-bottom-color: var(--llai-accent) !important;
+    }
+    .update-badge {
+      color: var(--llai-muted-soft) !important;
+    }
+    .tabs button.active {
+      background: linear-gradient(90deg, #159bb0 0%, #25c6da 100%) !important;
+    }
+    .tabs button.secondary {
+      background: var(--llai-secondary) !important;
+    }
+    .source-preview, .preview {
+      background: var(--llai-surface) !important;
+      border-color: var(--llai-border-soft) !important;
+    }
+    .source-preview .placeholder, .preview .placeholder, .preview.loading::after {
+      color: var(--llai-placeholder) !important;
+    }
+    .thumb-item {
+      border-color: var(--llai-border-soft) !important;
+    }
+    .thumb-item .thumb-idx {
+      background: rgba(6, 22, 33, 0.78) !important;
+      color: var(--llai-text) !important;
+    }
+    .thumb-item .thumb-del,
+    .thumb-item .thumb-up,
+    .thumb-item .thumb-down {
+      background: rgba(9, 31, 48, 0.52) !important;
+      color: var(--llai-text) !important;
+    }
+    .thumb-item .thumb-del:hover {
+      background: rgba(244, 114, 86, 0.78) !important;
+    }
+    .thumb-item .thumb-up:hover,
+    .thumb-item .thumb-down:hover {
+      background: rgba(37, 198, 218, 0.78) !important;
+    }
+    .thumb-add {
+      border-color: var(--llai-border-soft) !important;
+      background: rgba(255, 255, 255, 0.03) !important;
+      color: var(--llai-placeholder) !important;
+    }
+    .thumb-add:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: var(--llai-border) !important;
+      color: var(--llai-text) !important;
+    }
+    .preview-gallery-main {
+      background: rgba(8, 23, 36, 0.35) !important;
+    }
+    .preview-gallery-thumb {
+      border-color: var(--llai-border-soft) !important;
+    }
+    .preview-gallery-thumb.active {
+      border-color: var(--llai-accent) !important;
+    }
+    .preview-gallery-count,
+    .preview-time {
+      background: rgba(6, 22, 33, 0.78) !important;
+      color: var(--llai-text) !important;
+    }
+    .preview-time {
+      color: var(--llai-accent-soft) !important;
+    }
+    .status {
+      background: var(--llai-surface) !important;
+      color: var(--llai-text) !important;
+    }
+    .status.success {
+      color: var(--llai-accent-soft) !important;
+    }
+    .status.error {
+      color: var(--llai-danger) !important;
+    }
+    .check-option label {
+      color: var(--llai-muted-soft) !important;
+    }
+    .hint {
+      color: var(--llai-muted-soft) !important;
+    }
+    .author-footer {
+      border-top-color: var(--llai-border-strong) !important;
+    }
+    .author-footer .author-line {
+      color: var(--llai-text) !important;
+    }
+    .author-footer .link-item {
+      color: var(--llai-accent) !important;
+    }
+    .author-footer .author-line .sep {
+      color: var(--llai-border) !important;
+    }
+    .params-wrapper {
+      border-color: var(--llai-border) !important;
+    }
+    .params-toggle {
+      background: var(--llai-header) !important;
+      color: var(--llai-text) !important;
+    }
+    .params-toggle:hover {
+      background: var(--llai-header-hover) !important;
+    }
+    .params-toggle .arrow {
+      color: var(--llai-muted-soft) !important;
+    }
+    .params-body, #rhWorkflowParams, #localComfyParams {
+      border-top-color: var(--llai-border) !important;
+    }
+    .inline-modal {
+      border-color: var(--llai-accent) !important;
+      background: var(--llai-panel) !important;
+    }
+    .inline-modal-header {
+      background: var(--llai-header) !important;
+      border-bottom-color: var(--llai-border-strong) !important;
+    }
+    .inline-modal-header span {
+      color: var(--llai-accent) !important;
+    }
+    .inline-modal-actions {
+      border-top-color: var(--llai-border-strong) !important;
+    }
+    #ps-ai-preview-overlay {
+      background: var(--llai-overlay) !important;
+    }
+    #ps-ai-preview-overlay > div {
+      background: var(--llai-panel) !important;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45) !important;
+    }
+    #ps-ai-preview-overlay > div > div:first-child {
+      background: rgba(255, 255, 255, 0.05) !important;
+      color: var(--llai-text) !important;
+    }
+    #ps-ai-preview-overlay > div > div:last-child {
+      background: #0b2233 !important;
+    }
+    #ps-ai-preview-overlay button {
+      background: linear-gradient(90deg, #159bb0 0%, #25c6da 100%) !important;
+      color: var(--llai-text) !important;
+    }
+    #ps-ai-preview-overlay button:hover {
+      background: linear-gradient(90deg, #17afc5 0%, #2ad6e8 100%) !important;
+    }
+    .service-tabs button {
+      background: none !important;
+      background-image: none !important;
+      border: none !important;
+      border-bottom: 0 !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      padding-bottom: 10px !important;
+    }
+    .service-tabs {
+      position: relative !important;
+    }
+    .service-tabs button::before,
+    .service-tabs button::after {
+      display: none !important;
+      content: none !important;
+    }
+    .service-tabs button:hover,
+    .service-tabs button.active {
+      background: none !important;
+      background-image: none !important;
+    }
+    .service-tabs button:not(.active) {
+      background-image: none !important;
+      border-bottom: 0 !important;
+      box-shadow: none !important;
+    }
+    .service-tabs button.active {
+      border-bottom: 0 !important;
+      box-shadow: none !important;
+      background-image: none !important;
+    }
+    .service-tab-indicator {
+      position: absolute;
+      left: 0;
+      bottom: 8px;
+      width: 0;
+      height: 3px;
+      background: var(--llai-accent-strong);
+      box-shadow: 0 0 6px rgba(45, 220, 240, 0.75);
+      pointer-events: none;
+      transform: translateX(0);
+      transition: transform 0.15s ease, width 0.15s ease;
+      z-index: 1;
+    }
+    #llaiContent .llai-credentials-panel,
+    #gpt2Content .llai-credentials-panel {
+      width: calc(100% - 10px) !important;
+      min-height: 36px !important;
+      margin: 5px !important;
+      border: 1px solid var(--llai-border-strong) !important;
+      border-radius: 8px !important;
+      background: var(--llai-panel) !important;
+      overflow: hidden !important;
+    }
+    #llaiContent .llai-credentials-toggle,
+    #gpt2Content .llai-credentials-toggle {
+      position: relative !important;
+      width: 100% !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      max-height: 36px !important;
+      padding: 0 36px 0 11px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      background-image: none !important;
+      color: var(--llai-text) !important;
+      box-shadow: none !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      line-height: 36px !important;
+      text-align: left !important;
+      cursor: pointer !important;
+      user-select: none !important;
+    }
+    #llaiContent .llai-credentials-toggle:hover,
+    #gpt2Content .llai-credentials-toggle:hover {
+      background: rgba(255, 255, 255, 0.04) !important;
+    }
+    #llaiContent .llai-credentials-title,
+    #gpt2Content .llai-credentials-title {
+      display: block !important;
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif !important;
+      font-weight: 500 !important;
+      font-synthesis: none !important;
+      -webkit-font-smoothing: antialiased !important;
+      text-align: left !important;
+      pointer-events: none !important;
+    }
+    #llaiContent .llai-credentials-arrow,
+    #gpt2Content .llai-credentials-arrow {
+      position: absolute !important;
+      right: 14px !important;
+      top: 50% !important;
+      display: block !important;
+      width: 10px !important;
+      height: 10px !important;
+      border-right: 3px solid var(--llai-text) !important;
+      border-bottom: 3px solid var(--llai-text) !important;
+      transform: translateY(-65%) rotate(45deg) !important;
+      transition: transform 0.16s ease !important;
+    }
+    #llaiContent .llai-credentials-panel.expanded .llai-credentials-arrow,
+    #gpt2Content .llai-credentials-panel.expanded .llai-credentials-arrow {
+      transform: translateY(-35%) rotate(225deg) !important;
+    }
+    #llaiContent .llai-credentials-body,
+    #gpt2Content .llai-credentials-body {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding: 0 10px 10px;
+      border-top: 1px solid var(--llai-border-strong);
+    }
+    #llaiContent .llai-credentials-panel.collapsed .llai-credentials-body,
+    #gpt2Content .llai-credentials-panel.collapsed .llai-credentials-body {
+      display: none !important;
+    }
+    .author-footer .link-item {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      min-width: 0 !important;
+    }
+    .author-footer .link-item:hover {
+      background: none !important;
+    }
+  </style>
+</head>
+<body>
+    <div class="panel">
+        <div class="service-tabs">
+      <button id="llaiTab" class="active">低价API</button>
+      <button id="rhWorkflowTab">RunningHub</button>
+      <button id="localComfyTab">ComfyUI</button>
+      <button id="gpt2Tab">官方API</button>
+      <div class="service-tab-indicator" id="serviceTabIndicator"></div>
+    </div>
+
+    <div class="service-content visible" id="llaiContent">
+      <div class="llai-credentials-panel collapsed" id="llaiCredentialsPanel">
+        <div class="llai-credentials-toggle" id="llaiCredentialsToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="llaiCredentialsBody">
+          <span class="llai-credentials-title">模型与密钥</span>
+          <span class="llai-credentials-arrow" aria-hidden="true"></span>
+        </div>
+        <div class="llai-credentials-body" id="llaiCredentialsBody">
+          <div class="section">
+            <label>模型</label>
+            <select id="llaiModel">
+              <option value="gpt-image-2" selected>gpt-image-2</option>
+              <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview</option>
+              <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview</option>
+            </select>
+          </div>
+          <div class="section">
+            <label>API Key</label>
+            <input type="text" id="llaiApiKey" placeholder="API Key...">
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button id="llaiT2iTab" class="active">文生图</button>
+        <button id="llaiI2iTab" class="secondary">图生图</button>
+      </div>
+
+      <div class="check-option" id="llaiCanvasPlacementOption">
+        <input type="checkbox" id="llaiCanvasPlacement">
+        <label for="llaiCanvasPlacement">精确放置到画布位置</label>
+      </div>
+
+      <div class="i2i-options" id="llaiI2iOptions">
+        <div class="row">
+          <button id="llaiGetSelectionBtn" class="secondary">获取选区</button>
+          <button id="llaiGetCanvasBtn" class="secondary">获取全图</button>
+          <button id="llaiClearImgsBtn" class="secondary">清空</button>
+        </div>
+        <div class="source-preview" id="llaiSourcePreview">
+          <div class="placeholder" id="llaiSourcePlaceholder">点击 + 添加本地参考图，或从画布获取（可多张，最多10张）</div>
+          <div class="thumb-list" id="llaiThumbList"></div>
+        </div>
+        <div class="check-option">
+          <input type="checkbox" id="llaiExactPlacement" checked>
+          <label for="llaiExactPlacement">精确放置到原选区位置和尺寸</label>
+        </div>
+      </div>
+
+      <div class="section tight">
+        <label>Prompt</label>
+        <sp-textarea id="llaiPrompt" placeholder="Describe the image..." spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></sp-textarea>
+        <div class="hint" id="llaiPromptHint" style="font-size:10px;color:#888;line-height:1.2;"></div>
+      </div>
+
+      <div class="section tight">
+        <div class="row param-row">
+          <div>
+            <label>Aspect Ratio</label>
+            <select id="llaiAspectRatio">
+              <option value="auto" selected>auto（图生图自动匹配）</option>
+              <option value="1:1">1:1</option>
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16</option>
+              <option value="21:9">21:9</option>
+              <option value="9:21">9:21</option>
+              <option value="4:3">4:3</option>
+              <option value="3:4">3:4</option>
+              <option value="3:2">3:2</option>
+              <option value="2:3">2:3</option>
+              <option value="5:4">5:4</option>
+              <option value="4:5">4:5</option>
+              <option value="2:1">2:1</option>
+              <option value="1:2">1:2</option>
+              <option value="3:1">3:1</option>
+              <option value="1:3">1:3</option>
+            </select>
+          </div>
+          <div>
+            <label>Resolution</label>
+            <select id="llaiResolution">
+              <option value="1k" selected>1K</option>
+              <option value="2k">2K</option>
+              <option value="4k">4K</option>
+            </select>
+          </div>
+          <div id="llaiBatchSizeSection">
+            <label>Batch Size</label>
+            <select id="llaiBatchSize">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div id="llaiQualitySection" style="display:none;">
+            <label>Quality</label>
+            <select id="llaiQuality">
+              <option value="auto">Auto</option>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-option">
+        <input type="checkbox" id="llaiFeedbackLoop">
+        <label for="llaiFeedbackLoop">结果回输（生成结果自动作为下次输入）</label>
+      </div>
+
+      <div class="actions">
+        <button id="llaiGenerateBtn">运行</button>
+        <button id="llaiStopBtn" class="secondary" disabled>停止</button>
+        <button id="llaiInsertBtn" class="secondary" disabled>插入图层</button>
+      </div>
+
+      <div class="preview" id="llaiPreview">
+        <div class="preview-time" id="llaiPreviewTime"></div>
+        <div class="placeholder">No image yet</div>
+        <img id="llaiPreviewImg">
+        <div class="preview-gallery" id="llaiPreviewGallery">
+          <div class="preview-gallery-main" id="llaiPreviewMain">
+            <img id="llaiPreviewMainImg">
+          </div>
+          <div class="preview-gallery-strip" id="llaiPreviewStrip"></div>
+        </div>
+      </div>
+
+      <div class="status" id="llaiStatus">Ready</div>
+      <div class="inline-modal" id="llaiLongWaitModal">
+        <div class="inline-modal-header">
+          <span>等待已超过 3 分钟</span>
+        </div>
+        <div class="inline-modal-body">
+          PS 尚未收到成功图片或明确失败信息，无法确认服务端任务最终状态。断开请求后，后台仍可能继续生图并扣费；继续等待将保持当前请求，直到平台返回成功或失败。
+        </div>
+        <div class="inline-modal-actions">
+          <button id="llaiContinueWaitBtn">继续等待</button>
+          <button id="llaiDisconnectRetryBtn" class="danger-action">断开请求</button>
+        </div>
+      </div>
+    </div>
+
+        <div class="service-content" id="gpt2Content">
+      <div class="llai-credentials-panel collapsed" id="gpt2CredentialsPanel">
+        <div class="llai-credentials-toggle" id="gpt2CredentialsToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="gpt2CredentialsBody">
+          <span class="llai-credentials-title">模型与密钥</span>
+          <span class="llai-credentials-arrow" aria-hidden="true"></span>
+        </div>
+        <div class="llai-credentials-body" id="gpt2CredentialsBody">
+          <div class="section">
+            <label>API 来源</label>
+            <select id="gpt2ApiSource">
+              <option value="runninghub" selected>RunningHub</option>
+              <option value="openai">Openai官方</option>
+              <option value="google">Gemini官方</option>
+              <option value="custom">自定义中转站</option>
+            </select>
+          </div>
+          <div class="section" id="gpt2ModelSection" style="display:none;">
+            <label>模型</label>
+            <select id="gpt2Model">
+              <option value="gpt-image-2" selected>gpt-image-2</option>
+              <option value="gemini-3.1-pro-image">Gemini 3.1 Pro Image</option>
+              <option value="gemini-3.1-flash-image">Gemini 3.1 Flash Image</option>
+            </select>
+          </div>
+          <div class="section" id="gpt2CustomUrlSection" style="display:none;">
+            <label>base url地址</label>
+            <input type="text" id="gpt2CustomUrl" placeholder="https://your-proxy.com">
+          </div>
+          <div class="section">
+            <label>API Key</label>
+            <input type="text" id="gpt2ApiKey" placeholder="API Key...">
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button id="gpt2T2iTab" class="active">文生图</button>
+        <button id="gpt2I2iTab" class="secondary">图生图</button>
+      </div>
+
+      <div class="i2i-options" id="gpt2I2iOptions">
+        <div class="row">
+          <button id="gpt2GetSelectionBtn" class="secondary">获取选区</button>
+          <button id="gpt2GetCanvasBtn" class="secondary">获取全图</button>
+          <button id="gpt2ClearImgsBtn" class="secondary">清空</button>
+        </div>
+        <div class="source-preview" id="gpt2SourcePreview">
+          <div class="placeholder" id="gpt2SourcePlaceholder">点击 + 添加本地参考图，或从画布获取（可多张，最多10张）</div>
+          <div class="thumb-list" id="gpt2ThumbList"></div>
+        </div>
+        <div class="check-option">
+          <input type="checkbox" id="gpt2ExactPlacement" checked>
+          <label for="gpt2ExactPlacement">精确放置到原选区位置和尺寸</label>
+        </div>
+      </div>
+
+      <div class="section tight">
+        <label>Prompt</label>
+        <sp-textarea id="gpt2Prompt" placeholder="Describe the image..." spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></sp-textarea>
+        <div class="hint" id="gpt2PromptHint" style="font-size:10px;color:#888;line-height:1.2;"></div>
+      </div>
+
+      <div class="section tight">
+        <div class="row param-row">
+          <div>
+            <label>Aspect Ratio</label>
+            <select id="gpt2AspectRatio">
+              <option value="auto" selected>auto（图生图自动匹配）</option>
+              <option value="1:1">1:1</option>
+              <option value="3:2">3:2</option>
+              <option value="2:3">2:3</option>
+              <option value="4:3">4:3</option>
+              <option value="3:4">3:4</option>
+              <option value="5:4">5:4</option>
+              <option value="4:5">4:5</option>
+              <option value="9:16">9:16</option>
+              <option value="16:9">16:9</option>
+              <option value="21:9">21:9</option>
+            </select>
+          </div>
+          <div>
+            <label>Resolution</label>
+            <select id="gpt2Resolution">
+              <option value="1k">1K</option>
+              <option value="2k" selected>2K</option>
+              <option value="4k">4K</option>
+            </select>
+          </div>
+          <div id="gpt2QualitySection" style="display:none;">
+            <label>Quality</label>
+            <select id="gpt2Quality">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-option">
+        <input type="checkbox" id="gpt2FeedbackLoop">
+        <label for="gpt2FeedbackLoop">结果回输（生成结果自动作为下次输入）</label>
+      </div>
+
+      <div class="actions">
+        <button id="gpt2GenerateBtn">运行</button>
+        <button id="gpt2StopBtn" class="secondary" disabled>停止</button>
+        <button id="gpt2InsertBtn" class="secondary" disabled>插入图层</button>
+      </div>
+
+      <div class="preview" id="gpt2Preview">
+        <div class="preview-time" id="gpt2PreviewTime"></div>
+        <div class="placeholder">No image yet</div>
+        <img id="gpt2PreviewImg">
+      </div>
+
+      <div class="status" id="gpt2Status">Ready</div>
+    </div>
+
+    <div class="service-content" id="rhWorkflowContent">
+      <div class="section">
+        <label>API Key</label>
+        <input type="text" id="rhWorkflowApiKey" placeholder="RunningHub API Key...">
+      </div>
+
+      <div class="section">
+        <label>Workflow ID</label>
+        <input type="text" id="rhWorkflowId" placeholder="例如: 2047501563295440897">
+      </div>
+
+      <div class="row">
+        <button id="rhWorkflowLoadJsonBtn" type="button">加载工作流 JSON</button>
+      </div>
+
+      <div class="section">
+        <div class="row" style="align-items:center;">
+          <select id="rhWorkflowPresetList" style="flex:1;">
+            <option value="">--- 选择预设 ---</option>
+          </select>
+          <button id="rhWorkflowSavePresetBtn" class="secondary" style="flex:none;padding:5px 10px;">保存</button>
+          <button id="rhWorkflowDeletePresetBtn" class="secondary" style="flex:none;padding:5px 10px;">删除</button>
+        </div>
+      </div>
+
+      <div class="inline-modal" id="rhPresetNameModal">
+        <div class="inline-modal-header">
+          <span>保存预设</span>
+          <button id="rhPresetNameCloseBtn" class="secondary">取消</button>
+        </div>
+        <div class="inline-modal-body">
+          <div class="section">
+            <label>预设名称</label>
+            <input type="text" id="rhPresetNameInput" placeholder="输入预设名称...">
+          </div>
+        </div>
+        <div class="inline-modal-actions">
+          <button id="rhPresetNameCancelBtn" class="secondary">取消</button>
+          <button id="rhPresetNameConfirmBtn">确认保存</button>
+        </div>
+      </div>
+
+      <div class="section" id="rhWorkflowPromptSection" style="display:none;">
+        <label>Prompt</label>
+        <textarea id="rhWorkflowPrompt" placeholder="输入 Prompt..." spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+      </div>
+
+      <div class="params-wrapper collapsed" id="rhWorkflowParamsWrapper" style="display:none;">
+        <div class="params-toggle" id="rhWorkflowParamsToggle">
+          <span>自定义功能</span>
+          <span class="arrow" id="rhWorkflowParamsArrow">▼</span>
+        </div>
+        <div class="params-body collapsed" id="rhWorkflowParams"></div>
+      </div>
+
+      <div class="section" id="rhWorkflowImageSection" style="display:none;">
+        <div class="row">
+          <button id="rhWorkflowGetSelectionBtn" class="secondary">获取选区</button>
+          <button id="rhWorkflowGetCanvasBtn" class="secondary">获取全图</button>
+          <button id="rhWorkflowClearImgsBtn" class="secondary">清空</button>
+        </div>
+        <div class="source-preview" id="rhWorkflowSourcePreview">
+          <div class="placeholder" id="rhWorkflowSourcePlaceholder">点击 + 添加本地图片，或从画布获取，在工作流参数中指定给 LoadImage 节点</div>
+          <div class="thumb-list" id="rhWorkflowThumbList"></div>
+        </div>
+        <div class="check-option">
+          <input type="checkbox" id="rhWorkflowExactPlacement" checked>
+          <label for="rhWorkflowExactPlacement">精确放置到原选区位置和尺寸</label>
+        </div>
+      </div>
+
+      <div class="check-option" style="display:none;" id="rhWorkflowFeedbackSection">
+        <input type="checkbox" id="rhWorkflowFeedbackLoop">
+        <label for="rhWorkflowFeedbackLoop">结果回输（生成结果自动作为下次输入）</label>
+      </div>
+
+      <div class="actions" style="display:none;" id="rhWorkflowActions">
+        <button id="rhWorkflowGenerateBtn">运行</button>
+        <button id="rhWorkflowStopBtn" class="secondary" disabled>停止</button>
+        <button id="rhWorkflowInsertBtn" class="secondary" disabled>插入图层</button>
+      </div>
+
+      <div class="preview" id="rhWorkflowPreview">
+        <div class="preview-time" id="rhWorkflowPreviewTime"></div>
+        <div class="placeholder">No image yet</div>
+        <img id="rhWorkflowPreviewImg">
+        <div class="preview-gallery" id="rhWorkflowPreviewGallery">
+          <div class="preview-gallery-main" id="rhWorkflowPreviewMain">
+            <img id="rhWorkflowPreviewMainImg">
+          </div>
+          <div class="preview-gallery-strip" id="rhWorkflowPreviewStrip"></div>
+        </div>
+      </div>
+
+      <div class="status" id="rhWorkflowStatus">Ready</div>
+    </div>
+
+    <div class="service-content" id="localComfyContent">
+      <div class="section">
+        <label>ComfyUI 地址</label>
+        <div class="row">
+          <input type="text" id="localComfyAddress" placeholder="http://127.0.0.1:8188" value="http://127.0.0.1:8188">
+          <button id="localComfyTestBtn" class="secondary" style="flex:none;padding:6px 10px;">测试连接</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="localComfyLoadJsonBtn" type="button">加载工作流 JSON (API格式)</button>
+      </div>
+
+      <div class="section" id="localComfyNodeIdsSection" style="display:none;">
+        <label>备选：自定义暴露节点编号（多个用逗号分隔，留空则暴露全部）</label>
+        <input type="text" id="localComfyNodeIds" placeholder="例如: 9, 16, 3">
+      </div>
+
+      <div class="section">
+        <div class="row" style="align-items:center;">
+          <select id="localComfyPresetList" style="flex:1;">
+            <option value="">--- 选择预设 ---</option>
+          </select>
+          <button id="localComfySavePresetBtn" class="secondary" style="flex:none;padding:5px 10px;">保存</button>
+          <button id="localComfyDeletePresetBtn" class="secondary" style="flex:none;padding:5px 10px;">删除</button>
+        </div>
+      </div>
+
+      <div class="section" id="localComfyPromptSection" style="display:none;">
+        <label>Prompt</label>
+        <sp-textarea id="localComfyPrompt" placeholder="输入 Prompt..." spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></sp-textarea>
+        <div class="hint" id="localComfyPromptHint" style="font-size:10px;color:#888;line-height:1.2;">0 / 20000 characters</div>
+      </div>
+
+      <div class="inline-modal" id="localComfyPresetNameModal">
+        <div class="inline-modal-header">
+          <span>保存预设</span>
+          <button id="localComfyPresetNameCloseBtn" class="secondary">取消</button>
+        </div>
+        <div class="inline-modal-body">
+          <div class="section">
+            <label>预设名称</label>
+            <input type="text" id="localComfyPresetNameInput" placeholder="输入预设名称...">
+          </div>
+        </div>
+        <div class="inline-modal-actions">
+          <button id="localComfyPresetNameCancelBtn" class="secondary">取消</button>
+          <button id="localComfyPresetNameConfirmBtn">确认保存</button>
+        </div>
+      </div>
+
+      <div class="params-wrapper" id="localComfyParamsWrapper" style="display:none;">
+        <div class="params-toggle" id="localComfyParamsToggle">
+          <span>自定义功能</span>
+          <span class="arrow" id="localComfyParamsArrow">▼</span>
+        </div>
+        <div class="params-body" id="localComfyParams"></div>
+      </div>
+
+      <div class="section" id="localComfyImageSection" style="display:none;">
+        <div class="row">
+          <button id="localComfyGetSelectionBtn" class="secondary">获取选区</button>
+          <button id="localComfyGetCanvasBtn" class="secondary">获取全图</button>
+          <button id="localComfyClearImgsBtn" class="secondary">清空</button>
+        </div>
+        <div class="source-preview" id="localComfySourcePreview">
+          <div class="placeholder" id="localComfySourcePlaceholder">点击 + 添加本地图片，或从画布获取，在工作流参数中指定给 LoadImage 节点</div>
+          <div class="thumb-list" id="localComfyThumbList"></div>
+        </div>
+        <div class="check-option">
+          <input type="checkbox" id="localComfyExactPlacement" checked>
+          <label for="localComfyExactPlacement">精确放置到原选区位置和尺寸</label>
+        </div>
+      </div>
+
+      <div class="check-option" style="display:none;" id="localComfyFeedbackSection">
+        <input type="checkbox" id="localComfyFeedbackLoop">
+        <label for="localComfyFeedbackLoop">结果回输（生成结果自动作为下次输入）</label>
+      </div>
+
+      <div class="actions" style="display:none;" id="localComfyActions">
+        <button id="localComfyGenerateBtn">运行</button>
+        <button id="localComfyStopBtn" class="secondary" disabled>停止</button>
+        <button id="localComfyInsertBtn" class="secondary" disabled>插入图层</button>
+      </div>
+
+      <div class="preview" id="localComfyPreview">
+        <div class="preview-time" id="localComfyPreviewTime"></div>
+        <div class="placeholder">No image yet</div>
+        <img id="localComfyPreviewImg">
+        <div class="preview-gallery" id="localComfyPreviewGallery">
+          <div class="preview-gallery-main" id="localComfyPreviewMain">
+            <img id="localComfyPreviewMainImg">
+          </div>
+          <div class="preview-gallery-strip" id="localComfyPreviewStrip"></div>
+        </div>
+      </div>
+
+      <div class="status" id="localComfyStatus">Ready</div>
+    </div>
+
+  </div>
+
+  <div class="author-footer" id="authorFooterCompact">
+    <div class="author-line" style="margin-top:0;">
+    </div>
+    <div class="author-line contact-line">
+      <span id="llaiContactText">微信：px10058</span><span class="sep">|</span><span id="llaiAuthorText">技术支持：梨梨AI</span>
+    </div>
+    <div class="author-line">
+      <button type="button" class="link-item" id="llaiTutorialLink">插件使用教程/版本更新</button>
+    </div>
+    <div class="author-line">
+      <button type="button" class="link-item" id="llaiApiLink">低价API地址</button>
+    </div>
+    <div class="author-line">
+      <button type="button" class="link-item" id="llaiAdCooperationLink">广告位合作</button>
+    </div>
+  </div>
+  <div class="update-badge" id="updateBadge" role="link" tabindex="0"></div>
+  <script src="update-check.js"></script>
+
+</body>
+</html>
