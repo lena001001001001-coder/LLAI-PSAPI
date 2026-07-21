@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "endpoint": "https://llai-psapi-usage-01.lena001001001001.workers.dev",
+  "publicToken": "llai_public_20260701",
+  "heartbeatMinutes": 20
+}
