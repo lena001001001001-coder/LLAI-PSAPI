@@ -1,5 +1,5 @@
 # Photoshop插件LLAI-PSAPI，适用版本23.0以上  
-操作教程查看👉：https://my.feishu.cn/wiki/IL63w8z6mizaQdkNfTEcB3lanqd?from=from_copylink
+操作教程查看👉：[https://my.feishu.cn/wiki/IL63w8z6mizaQdkNfTEcB3lanqd?from=from_copylink](https://my.feishu.cn/wiki/UXh8wrO8MieAjmkb7flcUPyenZe?from=from_copylink)
 
 ## 低价API
 低价API tab 用于调用插件内置的低价图像接口，支持 `gpt-image-2`、Gemini 图像模型等。可进行文生图、图生图，支持从 Photoshop 获取选区、获取全图，或添加本地参考图，最多可添加多张参考图。生成时可选择比例、分辨率，并支持结果预览、停止任务、结果回输和一键插入图层。图生图模式下可精确放置到原选区位置和尺寸。
