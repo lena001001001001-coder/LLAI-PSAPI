@@ -1,7 +1,7 @@
 {
   "id": "llai.psapi",
   "name": "LLAI-PSAPI",
-  "version": "1.2.15",
+  "version": "1.2.16",
   "main": "index.html",
   "manifestVersion": 6,
   "host": {

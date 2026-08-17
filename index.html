@@ -65,6 +65,7 @@
     .row > * { flex: 1; }
     .param-row { gap: 6px; align-items: flex-start; margin-top: 10px; }
     .param-row > div { display: flex; flex-direction: column; gap: 2px; }
+    .section label.llai-param-label { font-size: 12px; margin-left: 6px; }
     button {
       background: #095aba;
       color: #fff;
@@ -967,7 +968,7 @@
             <label>模型</label>
             <select id="llaiModel">
               <option value="gpt-image-2" selected>gpt-image-2</option>
-              <option value="gpt-image-2-c">gpt-image-2-c(低价小图)</option>
+              <option value="gpt-image-2-c">gpt-image-2-c(低价)</option>
               <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash香蕉2</option>
               <option value="gemini-3-pro-image-preview">gemini-3-pro香蕉pro</option>
               <option value="doubao-seedream-4-0-250828">doubao-seedream-4.0</option>
@@ -1017,7 +1018,7 @@
       <div class="section tight">
         <div class="row param-row">
           <div>
-            <label>Aspect Ratio</label>
+            <label class="llai-param-label">比例</label>
             <select id="llaiAspectRatio">
               <option value="auto" selected>auto（图生图自动匹配）</option>
               <option value="1:1">1:1</option>
@@ -1038,7 +1039,7 @@
             </select>
           </div>
           <div>
-            <label>Resolution</label>
+            <label class="llai-param-label">尺寸</label>
             <select id="llaiResolution">
               <option value="1k" selected>1K</option>
               <option value="2k">2K</option>
@@ -1046,14 +1047,11 @@
             </select>
           </div>
           <div id="llaiBatchSizeSection">
-            <label>Batch Size</label>
+            <label class="llai-param-label">批次</label>
             <select id="llaiBatchSize">
               <option value="1" selected>1</option>
               <option value="2">2</option>
               <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
             </select>
           </div>
           <div id="llaiQualitySection" style="display:none;">
